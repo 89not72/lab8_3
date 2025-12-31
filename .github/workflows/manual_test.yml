@@ -1,0 +1,41 @@
+name: Manual Java CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Download JUnit Libraries
+      run: |
+        # 手動下載 JUnit 4 和 Hamcrest Core (JUnit 的必要依賴)
+        wget -O junit.jar https://repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar
+        wget -O hamcrest.jar https://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar
+
+    - name: Compile Java Code
+      run: |
+        # 建立存放 class 檔的資料夾
+        mkdir -p out
+        # 編譯 src 資料夾下的所有 java 檔
+        # -d out: 指定輸出目錄
+        # -cp ...: 指定 Classpath (包含當前目錄與下載的 jar 檔)
+        javac -d out -cp .:junit.jar:hamcrest.jar src/*.java
+
+    - name: Run JUnit Tests
+      run: |
+        # 執行 JUnitCore 測試執行器
+        # 注意：這裡假設您的測試類別名稱為 TicTacToeTest 且沒有 package
+        java -cp out:junit.jar:hamcrest.jar org.junit.runner.JUnitCore TicTacToeTest
